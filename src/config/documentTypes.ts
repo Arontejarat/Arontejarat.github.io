@@ -1,0 +1,150 @@
+import type { DocCategoryId, DocTypeDef } from '@/types/domain'
+
+export const DOC_CATEGORIES: { id: DocCategoryId; title: string; description: string }[] = [
+  { id: 'identity', title: 'هویتی', description: 'شناسنامه، کارت ملی' },
+  { id: 'photo', title: 'تصویری', description: 'عکس پرسنلی' },
+  { id: 'education', title: 'تحصیلی', description: 'مدرک تحصیلی و گواهی‌های مرتبط' },
+  { id: 'bank', title: 'بانکی', description: 'اطلاعات حساب و مدرک بانکی موردنیاز' },
+  { id: 'employment', title: 'استخدامی', description: 'مدارک موردنیاز برای احراز صلاحیت شغلی' },
+  { id: 'family', title: 'خانوادگی', description: 'مدارک تأهل یا فرزند، در صورت نیاز' },
+  { id: 'insurance', title: 'بیمه‌ای', description: 'مدارک موردنیاز پرونده بیمه' },
+  { id: 'contract', title: 'قراردادی', description: 'نسخه قراردادها و الحاقیه‌ها' },
+  { id: 'other', title: 'سایر', description: 'مجوزها و مدارک اختصاصی شغل' },
+]
+
+const IMG_PDF = ['application/pdf', 'image/jpeg', 'image/png']
+
+export const DOC_TYPES: DocTypeDef[] = [
+  {
+    id: 'national_card',
+    category: 'identity',
+    title: 'کارت ملی',
+    required: true,
+    requirements: 'تصویر رنگی و خوانای پشت و روی کارت ملی در یک فایل.',
+    accept: IMG_PDF,
+    maxSizeMb: 5,
+    reviewParty: 'company',
+    sensitive: true,
+  },
+  {
+    id: 'birth_cert',
+    category: 'identity',
+    title: 'شناسنامه',
+    required: true,
+    requirements: 'تصویر تمام صفحات دارای اطلاعات شناسنامه.',
+    accept: IMG_PDF,
+    maxSizeMb: 5,
+    reviewParty: 'company',
+    sensitive: true,
+  },
+  {
+    id: 'photo',
+    category: 'photo',
+    title: 'عکس پرسنلی',
+    required: true,
+    requirements: 'عکس ۳×۴ رنگی، زمینه روشن، جدید (حداکثر ۶ ماه اخیر). فقط JPG یا PNG.',
+    accept: ['image/jpeg', 'image/png'],
+    maxSizeMb: 2,
+    reviewParty: 'company',
+  },
+  {
+    id: 'degree',
+    category: 'education',
+    title: 'مدرک تحصیلی',
+    required: true,
+    requirements: 'تصویر آخرین مدرک تحصیلی یا گواهی موقت.',
+    accept: IMG_PDF,
+    maxSizeMb: 5,
+    reviewParty: 'company',
+  },
+  {
+    id: 'bank_proof',
+    category: 'bank',
+    title: 'گواهی شماره شبا',
+    required: true,
+    requirements: 'گواهی صادره از بانک یا تصویر کارت بانکی که نام صاحب حساب در آن دیده شود.',
+    accept: IMG_PDF,
+    maxSizeMb: 5,
+    reviewParty: 'company',
+    sensitive: true,
+  },
+  {
+    id: 'no_criminal',
+    category: 'employment',
+    title: 'گواهی عدم سوءپیشینه',
+    required: true,
+    requirements: 'گواهی معتبر با تاریخ صدور کمتر از ۶ ماه.',
+    accept: IMG_PDF,
+    maxSizeMb: 5,
+    hasExpiry: true,
+    reviewParty: 'org',
+  },
+  {
+    id: 'health_cert',
+    category: 'employment',
+    title: 'کارت بهداشت',
+    required: true,
+    requirements: 'تصویر کارت بهداشت معتبر؛ تاریخ اعتبار باید خوانا باشد.',
+    accept: IMG_PDF,
+    maxSizeMb: 5,
+    hasExpiry: true,
+    reviewParty: 'org',
+    sensitive: true,
+  },
+  {
+    id: 'marriage_cert',
+    category: 'family',
+    title: 'سند ازدواج',
+    required: false,
+    requirements: 'صفحات مشخصات زوجین. فقط برای افراد متأهل لازم است.',
+    accept: IMG_PDF,
+    maxSizeMb: 5,
+    reviewParty: 'company',
+  },
+  {
+    id: 'insurance_history',
+    category: 'insurance',
+    title: 'سوابق بیمه تأمین اجتماعی',
+    required: false,
+    requirements: 'گزارش سوابق از سامانه تأمین اجتماعی.',
+    accept: ['application/pdf'],
+    maxSizeMb: 5,
+    reviewParty: 'company',
+  },
+  {
+    id: 'contract_annex',
+    category: 'contract',
+    title: 'الحاقیه قرارداد',
+    required: false,
+    requirements: 'نسخه امضاشده الحاقیه.',
+    accept: ['application/pdf'],
+    maxSizeMb: 10,
+    reviewParty: 'company',
+  },
+  {
+    id: 'job_license',
+    category: 'other',
+    title: 'مجوز یا گواهی اختصاصی شغل',
+    required: false,
+    requirements: 'مثلاً گواهی دوره ایمنی، گواهینامه رانندگی یا مجوز حرفه‌ای.',
+    accept: IMG_PDF,
+    maxSizeMb: 5,
+    hasExpiry: true,
+    reviewParty: 'org',
+  },
+]
+
+export const DOC_REJECT_REASONS: { code: string; label: string }[] = [
+  { code: 'unreadable', label: 'تصویر خوانا نیست' },
+  { code: 'incomplete', label: 'مدرک ناقص است (همه صفحات ارسال نشده)' },
+  { code: 'expired', label: 'تاریخ اعتبار مدرک گذشته است' },
+  { code: 'mismatch', label: 'اطلاعات مدرک با پرونده مطابقت ندارد' },
+  { code: 'wrong_type', label: 'نوع مدرک اشتباه است' },
+  { code: 'other', label: 'سایر موارد' },
+]
+
+export const ORG_FILE_TYPES = ['مجوز سازمانی', 'معرفی‌نامه', 'مکاتبه', 'فایل پروژه', 'مستندات قرارداد', 'مدارک تکمیلی نیرو']
+
+export function docType(id: string) {
+  return DOC_TYPES.find((d) => d.id === id)
+}
