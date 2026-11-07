@@ -47,6 +47,10 @@ The dark **نسخه نمایشی** bar at the top of every panel opens the **ا�
 - switch role without signing out;
 - reset the demo data.
 
+## Customer workflow additions
+
+Statements (company → organization), monthly work reports (organization → company), insurance registration/code in personnel documents, explicit forwarding of signed worker contracts, and company-uploaded payroll files are implemented. See [customer changes](docs/CUSTOMER_CHANGES.md) for workflows and demo storage limitations. Run `npm test` for the workflow regression checks.
+
 ## Stack
 React 19, TypeScript 7, Vite 8, Tailwind CSS 4, React Router 8 (data router, route-level code splitting), lucide-react icons and the Vazirmatn variable font.
 The Jalali calendar conversion is implemented locally in `src/lib/jalali.ts` and verified against `Intl` for every day across 20 years. There is no date library dependency.

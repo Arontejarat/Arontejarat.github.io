@@ -235,6 +235,7 @@ export function scopedRequests(db: DB, scope: Scope) {
 export function scopedContracts(db: DB, scope: Scope) {
   return db.contracts.filter((c) => {
     if (scope.role === 'org' && c.orgId !== scope.orgId) return false
+    if (scope.role === 'org' && c.kind === 'worker' && c.sharedWithOrg?.versionHash !== c.versionHash) return false
     if (scope.role === 'company' && c.companyId !== scope.companyId) return false
     // Organisation sees worker contracts read-only and project contracts it is party to
     if (scope.projectIds && scope.projectIds !== 'all' && !scope.projectIds.includes(c.projectId)) return false

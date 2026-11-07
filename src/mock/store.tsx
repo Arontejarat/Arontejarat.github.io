@@ -9,6 +9,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createSeed, DB_VERSION, type DB } from './seed'
 import * as A from './actions'
+import * as B from './businessActions'
 import { ApiError, type Actor } from './actions'
 import { sleep } from '@/lib/cn'
 
@@ -131,6 +132,10 @@ type ActionFn = (db: DB, actor: Actor, ...args: never[]) => unknown
 type Bound<F> = F extends (db: DB, actor: Actor, ...args: infer P) => infer R ? (...args: P) => Promise<R> : never
 
 const ACTIONS = {
+  sendBusinessDocument: B.sendBusinessDocument,
+  reviewBusinessDocument: B.reviewBusinessDocument,
+  shareWorkerContract: B.shareWorkerContract,
+  uploadPayslip: B.uploadPayslip,
   saveDraft: A.saveDraft,
   submitRequest: A.submitRequest,
   resubmitRequest: A.resubmitRequest,

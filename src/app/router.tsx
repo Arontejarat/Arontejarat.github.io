@@ -14,6 +14,8 @@ import type { Permission } from '@/types/domain'
 import { PageSkeleton } from '@/components/ui'
 
 const LOADERS: Record<string, () => Promise<Record<string, unknown>>> = {
+  '@/features/mgmt/BusinessDocuments': () => import('@/features/mgmt/BusinessDocuments'),
+  '@/features/mgmt/Payroll': () => import('@/features/mgmt/Payroll'),
   '@/app/adapters': () => import('@/app/adapters'),
   '@/features/admin/AdminOverview': () => import('@/features/admin/AdminOverview'),
   '@/features/admin/AdminPages': () => import('@/features/admin/AdminPages'),
@@ -46,6 +48,9 @@ const LOADERS: Record<string, () => Promise<Record<string, unknown>>> = {
 }
 
 const PAGE_MODULE: Record<string, string> = {
+  StatementsPage: '@/features/mgmt/BusinessDocuments',
+  WorkReportsPage: '@/features/mgmt/BusinessDocuments',
+  PayrollPage: '@/features/mgmt/Payroll',
   ActivityLogPage: '@/features/mgmt/ActivityLog',
   AdminAlertsPage: '@/features/admin/AdminPages',
   AdminAudit: '@/app/adapters',
@@ -147,6 +152,8 @@ function mgmtRoutes(): RouteObject[] {
     { path: 'requests/:id', ...page('RequestReviewPage', 'requests.view') },
     { path: 'contracts', ...page('MgmtContractsPage', 'contracts.view') },
     { path: 'contracts/:id', ...page('MgmtContractDetailPage', 'contracts.view') },
+    { path: 'statements', ...page('StatementsPage', 'files.manage') },
+    { path: 'work-reports', ...page('WorkReportsPage', 'files.manage') },
     { path: 'files', ...page('OrgFilesPage', 'files.manage') },
     { path: 'projects', ...page('ProjectsPage', 'projects.view') },
     { path: 'projects/:id', ...page('ProjectDetailPage', 'projects.view') },
@@ -237,6 +244,7 @@ export const router = createBrowserRouter([
         children: [
           ...mgmtRoutes(),
           { path: 'calendar', ...page('CalendarPage', 'tasks.view') },
+          { path: 'payroll', ...page('PayrollPage', 'payslips.manage') },
           { path: 'import', ...page('ExcelImportPage', 'workforce.import') },
           { path: '*', element: <NotFoundPage /> },
         ],

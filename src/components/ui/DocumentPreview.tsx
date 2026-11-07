@@ -2,9 +2,12 @@ import { useState } from 'react'
 import { FileText, Lock, Maximize2, ZoomIn, ZoomOut } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Dialog } from './overlay'
+import { StoredFile } from './StoredFile'
 import { IconButton } from './Button'
 
 export interface PreviewSource {
+  storageKey?: string
+  insuranceNumber?: string
   fileName: string
   mime: string
   previewUrl?: string
@@ -30,6 +33,10 @@ export function DocumentPreview({ source, restricted, className, watermark }: { 
       </div>
     )
   }
+  if (source.storageKey || source.insuranceNumber) return <div className={cn('space-y-3', className)}>
+    {source.insuranceNumber ? <p className="rounded-lg bg-ink-50 p-4 text-sm">کد بیمه: <bdi dir="ltr" className="font-semibold">{source.insuranceNumber}</bdi></p> : null}
+    {source.storageKey ? <StoredFile allowDownload={false} file={{ id: source.storageKey, storageKey: source.storageKey, name: source.fileName, mime: source.mime, size: 0, uploadedAt: '' }} /> : null}
+  </div>
   const body = (scale: number) => (
     <div className="relative mx-auto origin-top transition-transform" style={{ transform: `scale(${scale})` }}>
       {source.previewUrl ? (

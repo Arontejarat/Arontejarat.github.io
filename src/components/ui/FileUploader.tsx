@@ -4,10 +4,11 @@ import { cn, sleep, uid } from '@/lib/cn'
 import { formatFileSize, toFaDigits } from '@/lib/format'
 import type { Attachment } from '@/types/domain'
 import { useDemo } from '@/mock/store'
+import { saveFile } from '@/lib/fileStorage'
 import { ProgressBar } from './feedback'
 import { IconButton } from './Button'
 
-const TYPE_LABEL: Record<string, string> = { 'application/pdf': 'PDF', 'image/jpeg': 'JPG', 'image/png': 'PNG' }
+const TYPE_LABEL: Record<string, string> = { 'application/pdf': 'PDF', 'image/jpeg': 'JPG', 'image/png': 'PNG', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel (xlsx)', 'application/vnd.ms-excel': 'Excel (xls)', 'text/csv': 'CSV' }
 
 export function acceptLabel(accept: string[]) {
   return accept.map((a) => TYPE_LABEL[a] ?? a).join('، ')
@@ -49,6 +50,7 @@ interface Pending {
 }
 
 export interface FileUploaderProps {
+  persistFile?: boolean
   value: Attachment[]
   onChange: (v: Attachment[]) => void
   accept?: string[]
@@ -62,7 +64,7 @@ export interface FileUploaderProps {
   compact?: boolean
 }
 
-export function FileUploader({ value, onChange, accept = ['application/pdf', 'image/jpeg', 'image/png'], maxSizeMb = 5, maxFiles = 3, id, invalid, describedBy, camera = true, compact }: FileUploaderProps) {
+export function FileUploader({ persistFile = false, value, onChange, accept = ['application/pdf', 'image/jpeg', 'image/png'], maxSizeMb = 5, maxFiles = 3, id, invalid, describedBy, camera = true, compact }: FileUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const camRef = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState<Pending[]>([])
@@ -82,8 +84,18 @@ export function FileUploader({ value, onChange, accept = ['application/pdf', 'im
       }
       setPending((xs) => xs.map((x) => (x.key === p.key ? { ...x, progress: Math.min(100, pr) } : x)))
     }
+    let storageKey: string | undefined
+    if (persistFile) {
+      try {
+        storageKey = p.key
+        await saveFile(storageKey, p.file)
+      } catch (error) {
+        setPending((xs) => xs.map((x) => x.key === p.key ? { ...x, error: error instanceof Error ? error.message : 'ذخیره فایل انجام نشد.' } : x))
+        return
+      }
+    }
     const previewUrl = await makePreview(p.file)
-    const att: Attachment = { id: uid('att'), name: p.file.name, size: p.file.size, mime: p.file.type, uploadedAt: new Date().toISOString(), previewUrl }
+    const att: Attachment = { storageKey, id: uid('att'), name: p.file.name, size: p.file.size, mime: p.file.type, uploadedAt: new Date().toISOString(), previewUrl }
     setPending((xs) => xs.filter((x) => x.key !== p.key))
     onChange([...valueRef.current, att])
   }
@@ -162,7 +174,7 @@ export function FileUploader({ value, onChange, accept = ['application/pdf', 'im
         <ul className="space-y-2" aria-live="polite">
           {value.map((a) => (
             <li key={a.id} className="flex items-center gap-3 rounded-lg border border-ink-200 bg-white p-2.5">
-              {a.previewUrl ? (
+              {a.previewUrl && a.mime.startsWith('image/') ? (
                 <img src={a.previewUrl} alt="" className="size-10 shrink-0 rounded-md object-cover ring-1 ring-ink-200" />
               ) : (
                 <span className="grid size-10 shrink-0 place-items-center rounded-md bg-red-50 text-red-700">

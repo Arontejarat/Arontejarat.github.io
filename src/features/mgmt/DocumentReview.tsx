@@ -332,7 +332,7 @@ function ReviewDrawer({ docId, onClose }: { docId: string; onClose: () => void }
     >
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-3">
-          <DocumentPreview source={{ fileName: shown.fileName, mime: shown.mime, previewUrl: shown.previewUrl, title: t.title }} restricted={restricted} watermark={`${m.user?.name} — ${formatDate(new Date())}`} />
+          <DocumentPreview source={{ fileName: shown.fileName, mime: shown.mime, previewUrl: shown.previewUrl, storageKey: shown.storageKey, insuranceNumber: shown.insuranceNumber, title: t.title }} restricted={restricted} watermark={`${m.user?.name} — ${formatDate(new Date())}`} />
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-500">
             <span dir="auto">{shown.fileName}</span>
             {canDownload ? (

@@ -47,6 +47,7 @@ export function OrgFilesPanel({ incoming }: { incoming?: boolean }) {
   const files = useMemo(
     () =>
       db.orgFiles
+        .filter((f) => !f.kind)
         .filter((f) => (incoming ? f.owner !== m.role && f.access === 'shared' && (!f.projectId || projectIds.has(f.projectId)) : f.owner === m.role && f.ownerId === m.entityId))
         .filter((f) => (!q || f.title.includes(q)) && (!type || f.docType === type) && (!project || f.projectId === project))
         .sort((a, b) => b.date.localeCompare(a.date)),

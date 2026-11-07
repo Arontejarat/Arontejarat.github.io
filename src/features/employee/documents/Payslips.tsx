@@ -10,6 +10,7 @@ import { formatDate, formatNumber, formatPeriod, formatRial, toFaDigits } from '
 import { JALALI_MONTHS, periodKey } from '@/lib/jalali'
 import { cn } from '@/lib/cn'
 import type { Payslip } from '@/types/domain'
+import { StoredFile } from '@/components/ui/StoredFile'
 import { DocumentsTabs } from './DocumentsHub'
 
 export const gross = (p: Pick<Payslip, 'earnings'>) => p.earnings.reduce((a, b) => a + b.amount, 0)
@@ -40,24 +41,24 @@ function PayslipList({ empty }: { empty: boolean }) {
   const [q, setQ] = useState('')
   const rows = useMemo(() => all.filter((p) => (!year || String(p.year) === year) && (!month || String(p.month) === month) && (!q || formatPeriod(p.year, p.month).includes(q))), [all, year, month, q])
   if (all.length === 0) return <EmptyState icon={Receipt} title="هنوز فیش حقوقی صادر نشده است" description="پس از محاسبه حقوق اولین ماه کاری، فیش شما در این بخش نمایش داده می‌شود." />
-  const trend = [...all].slice(0, 12).reverse()
+  const trend = all.filter((p) => p.source !== 'file').slice(0, 12).reverse()
 
   const columns: Column<Payslip>[] = [
     { id: 'period', header: 'دوره حقوق', cell: (p) => <span className="font-semibold">{formatPeriod(p.year, p.month)}</span>, sortValue: (p) => p.year * 12 + p.month },
     { id: 'status', header: 'وضعیت فیش', cell: (p) => <StatusBadge meta={PAYSLIP_STATUS[p.status]} variant="dot" /> },
-    { id: 'net', header: 'مبلغ خالص', cell: (p) => <span className="font-semibold tabular">{formatRial(netPay(p))}</span>, sortValue: netPay },
+    { id: 'net', header: 'مبلغ خالص', cell: (p) => <span className="font-semibold tabular">{(p.source === 'file' ? 'در فایل فیش' : formatRial(netPay(p)))}</span>, sortValue: netPay },
     { id: 'issued', header: 'تاریخ صدور', cell: (p) => formatDate(p.correctedAt ?? p.issuedAt) },
     { id: 'pay', header: 'وضعیت پرداخت', cell: (p) => <StatusBadge meta={paymentMeta(p)} size="sm" /> },
     { id: 'go', header: <span className="sr-only">جزئیات</span>, cell: () => <ChevronLeft size={16} className="text-ink-300" aria-hidden />, className: 'w-8' },
   ]
   return (
     <div className="space-y-5">
-      <Card>
-        <CardHeader title="خالص پرداختی ماه‌های اخیر" description="روند مبلغ خالص درج‌شده در فیش‌ها (ریال)" />
+      {trend.length > 0 ? <Card>
+        <CardHeader title="خالص پرداختی ماه‌های اخیر" description="روند فیش‌های دارای اطلاعات محاسباتی (ریال)؛ مبالغ فایل‌های بارگذاری‌شده در این نمودار نیست" />
         <dl className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div>
-            <dt className="text-xs text-ink-500">آخرین فیش ({formatPeriod(all[0].year, all[0].month)})</dt>
-            <dd className="text-base font-bold tabular">{formatRial(netPay(all[0]))}</dd>
+            <dt className="text-xs text-ink-500">آخرین فیش ({formatPeriod(trend[trend.length - 1].year, trend[trend.length - 1].month)})</dt>
+            <dd className="text-base font-bold tabular">{formatRial(netPay(trend[trend.length - 1]))}</dd>
           </div>
           <div>
             <dt className="text-xs text-ink-500">میانگین {toFaDigits(trend.length)} ماه</dt>
@@ -69,7 +70,7 @@ function PayslipList({ empty }: { empty: boolean }) {
           </div>
         </dl>
         <ColumnChart data={trend.map((p) => ({ label: JALALI_MONTHS[p.month - 1], sub: formatPeriod(p.year, p.month), value: netPay(p) }))} format={(n) => formatRial(n)} highlightLast />
-      </Card>
+      </Card> : null}
       <div>
         <FilterBar
           search={<SearchInput value={q} onChange={setQ} placeholder="جست‌وجوی دوره، مثلاً مهر" />}
@@ -90,7 +91,7 @@ function PayslipList({ empty }: { empty: boolean }) {
             <Link to={`/me/documents/payslips/${p.id}`} className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold">{formatPeriod(p.year, p.month)}</p>
-                <p className="mt-0.5 text-base font-extrabold tabular">{formatRial(netPay(p))}</p>
+                <p className="mt-0.5 text-base font-extrabold tabular">{p.source === 'file' ? 'مشاهده فایل فیش' : formatRial(netPay(p))}</p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   <StatusBadge meta={PAYSLIP_STATUS[p.status]} size="sm" />
                   <StatusBadge meta={paymentMeta(p)} size="sm" />
@@ -134,9 +135,9 @@ export function PayslipDetailPage() {
             <ButtonLink to={`/me/requests/new?type=payslip_objection&month=${periodKey(p.year, p.month)}`} variant="ghost" icon={FileWarning} className="no-print">
               اعتراض به فیش
             </ButtonLink>
-            <Button icon={Download} variant="outline" onClick={() => window.print()} className="no-print">
+            {shown.source !== 'file' ? <Button icon={Download} variant="outline" onClick={() => window.print()} className="no-print">
               دریافت PDF
-            </Button>
+            </Button> : null}
           </>
         }
       />
@@ -160,7 +161,11 @@ export function PayslipDetailPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      {shown.source === 'file' && shown.file ? <Card>
+        <CardHeader title="فایل فیش حقوقی" description={'بارگذاری توسط ' + (shown.uploadedBy ?? company?.name ?? 'شرکت') + ' — ' + formatDate(shown.correctedAt ?? shown.issuedAt)} />
+        <StoredFile file={shown.file} />
+        <p className="mt-4 text-sm text-ink-600">اطلاعات حقوق در فایل شرکت درج شده است. انتشار فیش به معنی واریز حقوق نیست.</p>
+      </Card> : <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card className="print-area">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-ink-100 pb-4">
             <div>
@@ -227,7 +232,7 @@ export function PayslipDetailPage() {
             </dl>
           </Card>
         </aside>
-      </div>
+      </div>}
     </>
   )
 }

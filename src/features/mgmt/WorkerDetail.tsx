@@ -27,6 +27,7 @@ import {
 import { useActions } from '@/auth/auth'
 import { useDB } from '@/mock/store'
 import { companyById, documentStatus, employeeDocumentChecklist, employeeInScope, fullName, orgById, projectById, projectInScope, requestType, workerContractSummary, workerDocSummary } from '@/mock/selectors'
+import { scopedContracts } from '@/mock/selectors'
 import { DOC_STATUS, EMPLOYMENT_STATUS, REQUEST_STATUS, VALIDITY_STATUS, CONTRACT_STAGE, WORKER_CONTRACT_SUMMARY, WORKER_DOC_SUMMARY } from '@/config/status'
 import { MARITAL_LABEL, SHIFT_LABEL } from '@/config/requestTypes'
 import { formatDate, formatMobile, formatPeriod, mask, maskSheba } from '@/lib/format'
@@ -60,7 +61,7 @@ function Detail({ id }: { id: string }) {
   const [busy, setBusy] = useState(false)
   const sensitive = m.can('workforce.sensitive')
   const requests = db.requests.filter((r) => r.employeeId === e.id && r.status !== 'draft' && r.steps.some((s) => s.party === m.role))
-  const contracts = db.contracts.filter((c) => c.employeeId === e.id).sort((a, b) => b.startDate.localeCompare(a.startDate))
+  const contracts = scopedContracts(db, m.scope).filter((c) => c.employeeId === e.id).sort((a, b) => b.startDate.localeCompare(a.startDate))
   const checklist = employeeDocumentChecklist(db, e)
   const projects = db.projects.filter((p) => projectInScope(m.scope, p) && p.status !== 'closed' && p.id !== e.projectId)
 

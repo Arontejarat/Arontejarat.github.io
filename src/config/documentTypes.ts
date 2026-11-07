@@ -102,6 +102,17 @@ export const DOC_TYPES: DocTypeDef[] = [
     reviewParty: 'company',
   },
   {
+    id: 'insurance_registration',
+    category: 'insurance',
+    title: 'ثبت‌نام بیمه / کد بیمه',
+    required: true,
+    requirements: 'گواهی ثبت‌نام بیمه یا مدرک دارای کد بیمه را ارسال کنید؛ ثبت کد بیمه به‌تنهایی نیز ممکن است.',
+    accept: IMG_PDF,
+    maxSizeMb: 5,
+    reviewParty: 'company',
+    sensitive: true,
+  },
+  {
     id: 'insurance_history',
     category: 'insurance',
     title: 'سوابق بیمه تأمین اجتماعی',

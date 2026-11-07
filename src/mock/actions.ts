@@ -5,7 +5,7 @@
  * calls them only through useActions() so the swap is localised.
  */
 import { uid } from '@/lib/cn'
-import { formatRial, toFaDigits } from '@/lib/format'
+import { formatRial, toEnDigits, toFaDigits } from '@/lib/format'
 import { docType } from '@/config/documentTypes'
 import { REQUEST_STATUS } from '@/config/status'
 import { toJalali } from '@/lib/jalali'
@@ -498,6 +498,8 @@ export function createWorkerContract(db: DB, actor: Actor, employeeId: string, y
 /* =================================================================== */
 
 export interface UploadInput {
+  storageKey?: string
+  insuranceNumber?: string
   typeId: string
   fileName: string
   size: number
@@ -509,11 +511,16 @@ export interface UploadInput {
 export function uploadPersonnelDocument(db: DB, actor: Actor, input: UploadInput, employeeId = actor.employeeId!) {
   const t = docType(input.typeId)
   if (!t) throw new ApiError('validation', 'نوع مدرک نامعتبر است.')
-  if (!t.accept.includes(input.mime)) throw new ApiError('validation', 'فایل انتخاب‌شده معتبر نیست.')
+  const insuranceNumber = input.insuranceNumber ? toEnDigits(input.insuranceNumber.trim()) : undefined
+  if (insuranceNumber && (t.id !== 'insurance_registration' || !/^[0-9]{1,30}$/.test(insuranceNumber))) throw new ApiError('validation', 'کد بیمه معتبر وارد کنید.')
+  const codeOnly = t.id === 'insurance_registration' && Boolean(insuranceNumber) && input.size === 0 && input.mime === 'text/plain'
+  if (!codeOnly && !t.accept.includes(input.mime)) throw new ApiError('validation', 'فایل انتخاب‌شده معتبر نیست.')
   if (input.size > t.maxSizeMb * 1024 * 1024) throw new ApiError('validation', `حجم فایل بیش از ${toFaDigits(t.maxSizeMb)} مگابایت است.`)
   let doc = db.documents.find((d) => d.employeeId === employeeId && d.typeId === input.typeId)
   const receiptNo = `DR-${Math.floor(Date.now() / 1000) % 1_000_000}`
   const version: DocVersion = {
+    storageKey: input.storageKey,
+    insuranceNumber,
     version: doc ? doc.versions.length + 1 : 1,
     fileName: input.fileName,
     size: input.size,

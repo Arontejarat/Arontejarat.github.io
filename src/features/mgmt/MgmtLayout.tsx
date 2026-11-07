@@ -39,6 +39,9 @@ export function MgmtLayout() {
     {
       title: 'اسناد و گزارش',
       items: [
+        ...item('files.manage', { to: `${b}/statements`, label: 'صورت‌وضعیت‌ها', icon: FileSpreadsheet }),
+        ...item('files.manage', { to: `${b}/work-reports`, label: 'کارکرد نیروها', icon: CalendarDays }),
+        ...item('payslips.manage', { to: `${b}/payroll`, label: 'فیش حقوق نیروها', icon: FileSpreadsheet }, true),
         ...item('files.manage', { to: `${b}/files`, label: m.isCompany ? 'اسناد شرکت و پروژه' : 'اسناد سازمان', icon: FolderOpen }),
         ...item('reports.view', { to: `${b}/reports`, label: 'گزارش‌ها', icon: ChartColumn }),
         ...item('activity.view', { to: `${b}/activity`, label: 'تاریخچه فعالیت‌ها', icon: Activity }),

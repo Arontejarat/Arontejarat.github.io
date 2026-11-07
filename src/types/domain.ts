@@ -34,6 +34,7 @@ export type Permission =
   | 'requests.decide'
   | 'requests.refer'
   | 'requests.execute'
+  | 'payslips.manage'
   | 'contracts.view'
   | 'contracts.manage'
   | 'contracts.approve'
@@ -236,6 +237,8 @@ export interface RequestTypeDef {
 }
 
 export interface Attachment {
+  /** Original binary in the demo browser file store. */
+  storageKey?: string
   id: string
   name: string
   size: number
@@ -363,6 +366,7 @@ export interface Contract {
   versionHash: string
   version: number
   viewedAt?: string
+  sharedWithOrg?: { at: string; by: string; versionHash: string }
   employeeSignature?: { signedAt: string; receiptNo: string; method: 'sms_otp'; mobile: string; versionHash: string }
   salary?: { label: string; amount: number }[]
   workHours?: string
@@ -397,6 +401,10 @@ export interface Payslip {
   correctionNote?: string
   /** null = no reliable payment information available */
   payment: { status: 'processing' | 'paid'; paidAt?: string; reference?: string } | null
+  file?: Attachment
+  uploadedBy?: string
+  /** File-only payslips have no parsed payroll amounts. */
+  source?: 'file'
   previous?: Omit<Payslip, 'previous'>[]
 }
 
@@ -431,6 +439,8 @@ export interface DocTypeDef {
 }
 
 export interface DocVersion {
+  storageKey?: string
+  insuranceNumber?: string
   version: number
   fileName: string
   size: number
@@ -456,6 +466,12 @@ export interface PersonnelDocument {
 }
 
 export interface OrgFile {
+  kind?: 'statement' | 'work_report'
+  period?: string
+  attachment?: Attachment
+  reviewNote?: string
+  reviewedAt?: string
+  reviewedBy?: string
   id: string
   owner: Party
   ownerId: string

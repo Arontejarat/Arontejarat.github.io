@@ -13,6 +13,7 @@ import {
   EmptyState,
   Field,
   FileUploader,
+  Input,
   Ltr,
   PageHeader,
   PageState,
@@ -27,7 +28,7 @@ import { useDB } from '@/mock/store'
 import { currentVersion, documentStatus, employeeDocumentChecklist } from '@/mock/selectors'
 import { DOC_CATEGORIES, DOC_TYPES, docType } from '@/config/documentTypes'
 import { DOC_STATUS } from '@/config/status'
-import { daysUntil, formatDate, formatDeadline, formatFileSize, formatNumber, toFaDigits } from '@/lib/format'
+import { daysUntil, formatDate, formatDeadline, formatFileSize, formatNumber, toEnDigits, toFaDigits } from '@/lib/format'
 import { toISODate } from '@/lib/jalali'
 import { cn } from '@/lib/cn'
 import type { Attachment, DocStatus, PersonnelDocument } from '@/types/domain'
@@ -152,11 +153,13 @@ export function DocumentUploadPage() {
   const [expiresAt, setExpiresAt] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
+  const [insuranceNumber, setInsuranceNumber] = useState('')
   const [receipt, setReceipt] = useState<{ docId: string; receiptNo: string; version: number } | null>(null)
   const t = docType(typeId)
   const existing = db.documents.find((d) => d.employeeId === emp.id && d.typeId === typeId)
   const replaceable = canReplace(existing)
-  const step = !t ? 1 : files.length === 0 ? 2 : 3
+  const insurance = t?.id === 'insurance_registration'
+  const step = !t ? 1 : files.length === 0 && !(insurance && insuranceNumber.trim()) ? 2 : 3
 
   const typeOptions = useMemo(
     () =>
@@ -197,7 +200,8 @@ export function DocumentUploadPage() {
   const submit = async () => {
     if (!t || busy) return
     const next: Record<string, string> = {}
-    if (files.length === 0) next.file = 'فایل مدرک را انتخاب کنید.'
+    if (files.length === 0 && !(insurance && insuranceNumber.trim())) next.file = insurance ? 'فایل ثبت‌نام یا کد بیمه را وارد کنید.' : 'فایل مدرک را انتخاب کنید.'
+    if (insurance && insuranceNumber && !/^[0-9]{1,30}$/.test(toEnDigits(insuranceNumber.trim()))) next.insuranceNumber = 'کد بیمه را با ارقام وارد کنید.'
     if (t.hasExpiry && !expiresAt) next.expiresAt = 'تاریخ پایان اعتبار را انتخاب کنید.'
     if (expiresAt && expiresAt <= toISODate(new Date())) next.expiresAt = 'تاریخ اعتبار باید بعد از امروز باشد.'
     setErrors(next)
@@ -205,7 +209,7 @@ export function DocumentUploadPage() {
     setBusy(true)
     try {
       const f = files[0]
-      const { doc, version } = await actions.uploadPersonnelDocument({ typeId: t.id, fileName: f.name, size: f.size, mime: f.mime, previewUrl: f.previewUrl, expiresAt: expiresAt || undefined })
+      const { doc, version } = await actions.uploadPersonnelDocument({ typeId: t.id, fileName: f?.name ?? 'کد بیمه', size: f?.size ?? 0, mime: f?.mime ?? 'text/plain', previewUrl: f?.previewUrl, storageKey: f?.storageKey, insuranceNumber: insurance ? insuranceNumber : undefined, expiresAt: expiresAt || undefined })
       setReceipt({ docId: doc.id, receiptNo: version.receiptNo, version: version.version })
     } catch (e) {
       toast.fromError(e, 'ارسال مدرک انجام نشد')
@@ -237,6 +241,7 @@ export function DocumentUploadPage() {
                 value={typeId}
                 onChange={(e) => {
                   setTypeId(e.target.value)
+                  setInsuranceNumber('')
                   setFiles([])
                 }}
                 placeholder="انتخاب کنید"
@@ -270,8 +275,9 @@ export function DocumentUploadPage() {
               </div>
               {replaceable || !existing ? (
                 <>
-                  <Field label="فایل مدرک" required error={errors.file}>
-                    {(p) => <FileUploader id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={files} onChange={setFiles} accept={t.accept} maxSizeMb={t.maxSizeMb} maxFiles={1} />}
+                  {insurance ? <Field label="کد بیمه" helper="کد بیمه یا فایل گواهی ثبت‌نام را وارد کنید." error={errors.insuranceNumber}>{(p) => <Input id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} value={insuranceNumber} onChange={(e) => setInsuranceNumber(toEnDigits(e.target.value))} inputMode="numeric" dir="ltr" maxLength={30} />}</Field> : null}
+                  <Field label={insurance ? 'فایل ثبت‌نام بیمه' : 'فایل مدرک'} required={!insurance} error={errors.file}>
+                    {(p) => <FileUploader persistFile id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={files} onChange={setFiles} accept={t.accept} maxSizeMb={t.maxSizeMb} maxFiles={1} />}
                   </Field>
                   {t.hasExpiry ? (
                     <Field label="تاریخ پایان اعتبار مدرک" required error={errors.expiresAt} helper="برای یادآوری پیش از انقضا استفاده می‌شود.">
@@ -281,7 +287,7 @@ export function DocumentUploadPage() {
                   {files[0] ? (
                     <div>
                       <p className="mb-2 text-sm font-semibold">پیش‌نمایش</p>
-                      <DocumentPreview source={{ fileName: files[0].name, mime: files[0].mime, previewUrl: files[0].previewUrl, title: t.title }} />
+                      <DocumentPreview source={{ fileName: files[0].name, mime: files[0].mime, previewUrl: files[0].previewUrl, storageKey: files[0].storageKey, title: t.title }} />
                     </div>
                   ) : null}
                 </>
@@ -292,7 +298,7 @@ export function DocumentUploadPage() {
             <Button variant="outline" onClick={() => navigate(-1)}>
               انصراف
             </Button>
-            <Button icon={Send} onClick={submit} loading={busy} disabled={!t || (existing && !replaceable) || files.length === 0}>
+            <Button icon={Send} onClick={submit} loading={busy} disabled={!t || (existing && !replaceable) || (files.length === 0 && !(insurance && insuranceNumber.trim()))}>
               تأیید و ارسال
             </Button>
           </div>
@@ -351,7 +357,7 @@ export function DocumentDetailPage() {
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card>
           <CardHeader title={`پیش‌نمایش نسخه ${toFaDigits(shown.version)}`} description={<span dir="auto">{shown.fileName}</span>} />
-          <DocumentPreview source={{ fileName: shown.fileName, mime: shown.mime, previewUrl: shown.previewUrl, title: t.title }} watermark={t.sensitive ? `${emp.firstName} ${emp.lastName} — فقط برای مشاهده` : undefined} />
+          <DocumentPreview source={{ fileName: shown.fileName, mime: shown.mime, previewUrl: shown.previewUrl, storageKey: shown.storageKey, insuranceNumber: shown.insuranceNumber, title: t.title }} watermark={t.sensitive ? `${emp.firstName} ${emp.lastName} — فقط برای مشاهده` : undefined} />
         </Card>
         <aside className="space-y-5">
           <Card>

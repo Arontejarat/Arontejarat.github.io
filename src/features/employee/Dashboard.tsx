@@ -264,7 +264,7 @@ function DashboardBody() {
             {latest ? (
               <Link to={`/me/documents/payslips/${latest.id}`} className="block rounded-lg hover:bg-ink-25">
                 <p className="text-xs text-ink-500">{formatPeriod(latest.year, latest.month)}</p>
-                <p className="mt-0.5 text-xl font-extrabold tabular">{formatRial(net)}</p>
+                <p className="mt-0.5 text-xl font-extrabold tabular">{latest?.source === 'file' ? 'مشاهده فایل فیش' : formatRial(net)}</p>
                 <p className="text-2xs text-ink-500">خالص پرداختی</p>
                 <div className="mt-2.5">
                   <StatusBadge size="sm" meta={latest.payment ? PAYMENT_STATUS[latest.payment.status] : PAYMENT_STATUS.unknown} />

@@ -127,6 +127,7 @@ function List({ empty }: { empty: boolean }) {
       },
       sortValue: (c) => c.signDeadline ?? 'z',
     },
+    { id: 'shared', header: 'ارسال به سازمان', cell: (c) => c.kind === 'worker' ? (c.sharedWithOrg ? formatDate(c.sharedWithOrg.at) : 'ارسال نشده') : '—' },
     { id: 'validity', header: 'وضعیت اعتبار', cell: (c) => <StatusBadge meta={VALIDITY_STATUS[validityStatus(c)]} variant="dot" /> },
     ...(kind === 'alerts'
       ? [
@@ -336,6 +337,12 @@ function Detail({ id }: { id: string }) {
           ارسال یادآوری امضا
         </Button>
       ) : null}
+      {manage && c.kind === 'worker' && c.stage === 'completed' && c.sharedWithOrg?.versionHash !== c.versionHash ? (
+        <Button block icon={Send} loading={busy} onClick={() => run(() => actions.shareWorkerContract(c.id), 'قرارداد امضاشده برای سازمان ارسال شد')}>
+          ارسال قرارداد امضاشده به سازمان
+        </Button>
+      ) : null}
+      {c.kind === 'worker' && c.sharedWithOrg ? <Callout tone="info">ارسال‌شده به سازمان در {formatDate(c.sharedWithOrg.at)} توسط {c.sharedWithOrg.by}</Callout> : null}
       {manage && companyUnsigned && ['awaiting_other', 'partially_signed'].includes(c.stage) ? (
         <Button block icon={PenLine} onClick={() => setSignOpen('company')}>
           ثبت امضای شرکت
@@ -389,7 +396,7 @@ function Detail({ id }: { id: string }) {
       ) : null}
       {m.role === 'org' && c.kind === 'worker' ? (
         <Callout tone="neutral" className="mb-5">
-          قراردادهای نیروی کار بین شرکت تأمین نیرو و نیروی کار منعقد می‌شود؛ سازمان فقط امکان مشاهده وضعیت دارد.
+          قراردادهای نیروی کار بین شرکت تأمین نیرو و نیروی کار منعقد می‌شود؛ نسخه امضاشده توسط شرکت برای سازمان ارسال شده و قابل مشاهده است.
         </Callout>
       ) : null}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
