@@ -30,6 +30,23 @@ npm run build      # production build → dist/
 npm run preview    # serve the build
 ```
 
+## GitHub Pages deployment
+
+In this repository on GitHub, open **Settings → Pages** and set **Source** to
+**GitHub Actions**. Push to `main`, or run **Deploy to GitHub Pages** from the
+**Actions** tab. The workflow installs dependencies, runs the regression checks,
+builds the app, and publishes `dist/` to https://arontejarat.github.io/.
+
+The Pages build uses hash routes (for example `/#/login`) so refreshing or sharing
+a nested page works on static hosting. Local development and the standard build
+keep browser routes. To preview the Pages build locally:
+
+```bash
+npm ci
+npm run build -- --mode github-pages
+npm run preview
+```
+
 ### Demo sign-in
 Open the **ورود سریع با حساب‌های نمایشی** panel on the login page and pick an account. There is one account per role and sub-role.
 You can also sign in with mobile + password: every account uses `Demo@1234`, and the SMS code is `12345`.

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet } from 'react-router'
+import { createBrowserRouter, createHashRouter, Outlet } from 'react-router'
 import { RequirePerm, RequireRole, RootRedirect, SessionWatcher } from './guards'
 import { ForgotPasswordPage, LoginPage, OtpPage } from '@/features/auth/AuthPages'
 import { ForbiddenPage, NotFoundPage, PublicPrivacyPage, RouteErrorPage, SessionExpiredPage, SystemStatusPage } from '@/features/system/SystemPages'
@@ -165,7 +165,10 @@ function mgmtRoutes(): RouteObject[] {
   ]
 }
 
-export const router = createBrowserRouter([
+// GitHub Pages cannot rewrite nested URLs to index.html on refresh.
+const createRouter = import.meta.env.MODE === 'github-pages' ? createHashRouter : createBrowserRouter
+
+export const router = createRouter([
   {
     element: <Root />,
     errorElement: <RouteErrorPage />,
