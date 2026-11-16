@@ -10,6 +10,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { createSeed, DB_VERSION, type DB } from './seed'
 import * as A from './actions'
 import * as B from './businessActions'
+import * as HR from './hrActions'
+import * as CB from './contractBatch'
+import { migrateDB } from './migrate'
+import { evaluateFamilyRules } from './hrRules'
 import { ApiError, type Actor } from './actions'
 import { sleep } from '@/lib/cn'
 
@@ -42,12 +46,12 @@ function loadDb(): DB {
     const raw = localStorage.getItem(DB_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as DB
-      if (parsed.version === DB_VERSION) return parsed
+      if (parsed.version <= DB_VERSION) return migrateDB(parsed)
     }
   } catch {
     /* corrupted storage → reseed */
   }
-  return createSeed()
+  return migrateDB(createSeed())
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -93,13 +97,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Local scheduler: evaluate on load, focus and every minute; persist deduplication keys.
+  useEffect(() => {
+    const tick = () => {
+      const next = structuredClone(dbRef.current)
+      if (evaluateFamilyRules(next)) { dbRef.current = next; setDb(next) }
+    }
+    tick()
+    const timer = setInterval(tick, 60_000)
+    window.addEventListener('focus', tick)
+    return () => { clearInterval(timer); window.removeEventListener('focus', tick) }
+  }, [])
+
   const commit = useCallback((next: DB) => {
     dbRef.current = next
     setDb(next)
   }, [])
 
   const reset = useCallback(() => {
-    const fresh = createSeed()
+    const fresh = migrateDB(createSeed())
     commit(fresh)
   }, [commit])
 
@@ -132,6 +148,17 @@ type ActionFn = (db: DB, actor: Actor, ...args: never[]) => unknown
 type Bound<F> = F extends (db: DB, actor: Actor, ...args: infer P) => infer R ? (...args: P) => Promise<R> : never
 
 const ACTIONS = {
+  saveChild: HR.saveChild,
+  reviewChild: HR.reviewChild,
+  saveInsurance: HR.saveInsurance,
+  reviewInsurance: HR.reviewInsurance,
+  exportInsurance: HR.exportInsurance,
+  saveHRPolicy: HR.saveHRPolicy,
+  saveDocumentTemplate: HR.saveDocumentTemplate,
+  payslipFile: HR.payslipFile,
+  requestContractPreparation: HR.requestContractPreparation,
+  previewContractBatch: CB.previewContractBatch,
+  createContractBatch: CB.createContractBatch,
   sendBusinessDocument: B.sendBusinessDocument,
   reviewBusinessDocument: B.reviewBusinessDocument,
   shareWorkerContract: B.shareWorkerContract,
@@ -153,7 +180,7 @@ const ACTIONS = {
   remindContract: A.remindContract,
   advanceContractStage: A.advanceContractStage,
   signContractAsParty: A.signContractAsParty,
-  createWorkerContract: A.createWorkerContract,
+  createWorkerContract: HR.scopedCreateWorkerContract,
   uploadPersonnelDocument: A.uploadPersonnelDocument,
   reviewDocument: A.reviewDocument,
   updateEmployeeFields: A.updateEmployeeFields,
@@ -205,6 +232,7 @@ export function useActionsFor(actor: Actor | null): Actions {
         if (!actorRef.current) throw new ApiError('expired', 'نشست شما به پایان رسیده است. دوباره وارد شوید.')
         const draft = structuredClone(dbRef.current)
         const result = (fn as (...a: unknown[]) => unknown)(draft, actorRef.current, ...args)
+        evaluateFamilyRules(draft)
         commit(draft)
         return result
       }

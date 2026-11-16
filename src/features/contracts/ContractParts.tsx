@@ -1,3 +1,4 @@
+import { CompanyDocument } from '@/features/documents/CompanyDocument'
 import { CircleCheck, CircleDashed, Hourglass } from 'lucide-react'
 import type { Contract, Employee } from '@/types/domain'
 import { cn } from '@/lib/cn'
@@ -8,6 +9,10 @@ import { companyById, orgById, projectById } from '@/mock/selectors'
 
 /** Full contract text — rendered from the exact version that is signed. */
 export function ContractBody({ c, db, employee }: { c: Contract; db: DB; employee?: Employee }) {
+  return c.documentFormat ? <CompanyDocument template={c.documentFormat} title={c.documentFormat.contractTitle} number={c.number}><ContractText c={c} db={db} employee={employee} />{c.description ? <p>{c.description}</p> : null}</CompanyDocument> : <ContractText c={c} db={db} employee={employee} />
+}
+function ContractText({ c, db, employee }: { c: Contract; db: DB; employee?: Employee }) {
+  employee = employee && c.employeeSnapshot ? { ...employee, ...c.employeeSnapshot } : employee
   const company = companyById(db, c.companyId)
   const org = orgById(db, c.orgId)
   const project = projectById(db, c.projectId)

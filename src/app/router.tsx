@@ -1,4 +1,4 @@
-import { createBrowserRouter, createHashRouter, Outlet } from 'react-router'
+import { createBrowserRouter, Outlet } from 'react-router'
 import { RequirePerm, RequireRole, RootRedirect, SessionWatcher } from './guards'
 import { ForgotPasswordPage, LoginPage, OtpPage } from '@/features/auth/AuthPages'
 import { ForbiddenPage, NotFoundPage, PublicPrivacyPage, RouteErrorPage, SessionExpiredPage, SystemStatusPage } from '@/features/system/SystemPages'
@@ -14,6 +14,9 @@ import type { Permission } from '@/types/domain'
 import { PageSkeleton } from '@/components/ui'
 
 const LOADERS: Record<string, () => Promise<Record<string, unknown>>> = {
+  '@/features/personnel/PersonnelRecords': () => import('@/features/personnel/PersonnelRecords'),
+  '@/features/mgmt/DocumentTemplates': () => import('@/features/mgmt/DocumentTemplates'),
+  '@/features/mgmt/BulkContracts': () => import('@/features/mgmt/BulkContracts'),
   '@/features/mgmt/BusinessDocuments': () => import('@/features/mgmt/BusinessDocuments'),
   '@/features/mgmt/Payroll': () => import('@/features/mgmt/Payroll'),
   '@/app/adapters': () => import('@/app/adapters'),
@@ -48,6 +51,10 @@ const LOADERS: Record<string, () => Promise<Record<string, unknown>>> = {
 }
 
 const PAGE_MODULE: Record<string, string> = {
+  FamilyPage: '@/features/personnel/PersonnelRecords',
+  InsurancePage: '@/features/personnel/PersonnelRecords',
+  DocumentTemplatesPage: '@/features/mgmt/DocumentTemplates',
+  BulkContractsPage: '@/features/mgmt/BulkContracts',
   StatementsPage: '@/features/mgmt/BusinessDocuments',
   WorkReportsPage: '@/features/mgmt/BusinessDocuments',
   PayrollPage: '@/features/mgmt/Payroll',
@@ -165,10 +172,7 @@ function mgmtRoutes(): RouteObject[] {
   ]
 }
 
-// GitHub Pages cannot rewrite nested URLs to index.html on refresh.
-const createRouter = import.meta.env.MODE === 'github-pages' ? createHashRouter : createBrowserRouter
-
-export const router = createRouter([
+export const router = createBrowserRouter([
   {
     element: <Root />,
     errorElement: <RouteErrorPage />,
@@ -195,6 +199,8 @@ export const router = createRouter([
           { path: 'requests/:id', ...page('RequestDetailPage') },
           { path: 'requests/:id/edit', ...page('RequestEditPage') },
           { path: 'requests/:id/result', ...page('RequestResultPage') },
+          { path: 'family', ...page('FamilyPage', 'family.manage') },
+          { path: 'insurance', ...page('InsurancePage', 'insurance.view') },
           { path: 'documents', ...page('DocumentsHubPage') },
           { path: 'documents/search', ...page('DocumentSearchPage') },
           { path: 'documents/contracts', ...page('ContractListPage') },
@@ -246,6 +252,10 @@ export const router = createRouter([
         ),
         children: [
           ...mgmtRoutes(),
+          { path: 'family', ...page('FamilyPage', 'family.review') },
+          { path: 'insurance', ...page('InsurancePage', 'insurance.view') },
+          { path: 'document-templates', ...page('DocumentTemplatesPage', 'templates.manage') },
+          { path: 'contracts/bulk', ...page('BulkContractsPage', 'contracts.bulk') },
           { path: 'calendar', ...page('CalendarPage', 'tasks.view') },
           { path: 'payroll', ...page('PayrollPage', 'payslips.manage') },
           { path: 'import', ...page('ExcelImportPage', 'workforce.import') },

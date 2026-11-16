@@ -66,7 +66,7 @@ export function shareWorkerContract(db: DB, actor: Actor, id: string) {
   record(db, actor, 'ارسال قرارداد امضاشده به سازمان', c.id, c.number, c.projectId)
   return c
 }
-export function uploadPayslip(db: DB, actor: Actor, input: { employeeId: string; period: string; file: Attachment; correctionNote?: string; expectedVersion?: number }) {
+export function uploadPayslip(db: DB, actor: Actor, input: { employeeId: string; period: string; file: Attachment; correctionNote?: string; expectedVersion?: number; templateId?: string }) {
   const { scope } = requireUser(db, actor, 'payslips.manage')
   const emp = db.employees.find((e) => e.id === input.employeeId)
   if (actor.role !== 'company' || !emp || !employeeInScope(scope, emp)) throw new ApiError('forbidden', 'بارگذاری فیش این نیرو مجاز نیست.')
@@ -76,8 +76,10 @@ export function uploadPayslip(db: DB, actor: Actor, input: { employeeId: string;
   const existing = db.payslips.find((p) => p.employeeId === emp.id && p.year === year && p.month === month)
   if ((existing?.version ?? 0) !== (input.expectedVersion ?? 0)) throw new ApiError('conflict', 'فیش این دوره تغییر کرده است؛ صفحه را به‌روز کنید.')
   if (existing && !input.correctionNote?.trim()) throw new ApiError('validation', 'دلیل جایگزینی فیش را بنویسید.')
+  const template = input.templateId ? db.documentTemplates.find((t) => t.id === input.templateId && t.companyId === emp.companyId) : db.documentTemplates.find((t) => t.companyId === emp.companyId)
+  if (!template) throw new ApiError('forbidden', 'قالب شرکت معتبر نیست.')
   const at = new Date().toISOString()
-  const p: Payslip = { id: existing?.id ?? uid('pay'), employeeId: emp.id, year, month, source: 'file', file: input.file, uploadedBy: actor.name, status: existing ? 'corrected' : 'final', version: (existing?.version ?? 0) + 1, earnings: [], deductions: [], workDays: 0, overtimeHours: 0, issuedAt: existing?.issuedAt ?? at, correctedAt: existing ? at : undefined, correctionNote: input.correctionNote?.trim(), payment: existing?.payment ?? null }
+  const p: Payslip = { documentFormat: structuredClone(template), id: existing?.id ?? uid('pay'), employeeId: emp.id, year, month, source: 'file', file: input.file, uploadedBy: actor.name, status: existing ? 'corrected' : 'final', version: (existing?.version ?? 0) + 1, earnings: [], deductions: [], workDays: 0, overtimeHours: 0, issuedAt: existing?.issuedAt ?? at, correctedAt: existing ? at : undefined, correctionNote: input.correctionNote?.trim(), payment: existing?.payment ?? null }
   if (existing) {
     const { previous, ...snapshot } = structuredClone(existing)
     p.previous = [...(previous ?? []), snapshot]

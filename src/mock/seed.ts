@@ -43,6 +43,11 @@ export interface SupportTicket {
 }
 
 export interface DB {
+  documentTemplates: import('@/types/domain').CompanyDocumentTemplate[]
+  hrPolicies: import('@/types/domain').CompanyHRPolicy[]
+  insuranceRecords: import('@/types/domain').InsuranceRecord[]
+  contractBatches: import('@/types/domain').ContractBatch[]
+  ruleEvents: string[]
   version: number
   companies: Company[]
   organizations: Organization[]
@@ -72,7 +77,7 @@ export interface DB {
   }
 }
 
-export const DB_VERSION = 5
+export const DB_VERSION = 6
 
 export const DEMO_EMPLOYEE_ID = 'e1'
 
@@ -1099,6 +1104,9 @@ export function createSeed(): DB {
   ]
 
   return {
+    documentTemplates: companies.map((c) => ({ id: 'format-' + c.id, companyId: c.id, name: 'قالب رسمی', companyName: c.name, registrationInfo: c.registrationNo, address: c.city, contact: c.contactPhone, header: '', footer: '', contractTitle: 'قرارداد کار', payslipTitle: 'فیش حقوقی', signatoryName: c.contactName, signatoryTitle: 'نماینده مجاز شرکت', signatureArea: true, stampArea: true, showNumber: true, extraText: '', version: 1 })),
+    hrPolicies: companies.map((c) => ({ companyId: c.id, childAgeThreshold: 18, childNationalIdRequired: false })),
+    insuranceRecords: [], contractBatches: [], ruleEvents: [],
     version: DB_VERSION,
     companies,
     organizations,

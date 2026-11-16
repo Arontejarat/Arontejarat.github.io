@@ -41,6 +41,10 @@ export function MgmtLayout() {
       items: [
         ...item('files.manage', { to: `${b}/statements`, label: 'صورت‌وضعیت‌ها', icon: FileSpreadsheet }),
         ...item('files.manage', { to: `${b}/work-reports`, label: 'کارکرد نیروها', icon: CalendarDays }),
+        ...item('family.review', { to: b + '/family', label: 'اطلاعات فرزندان', icon: Users }, true),
+        ...item('insurance.view', { to: b + '/insurance', label: 'سوابق بیمه نیروها', icon: ShieldCheck }, true),
+        ...item('templates.manage', { to: b + '/document-templates', label: 'قالب اسناد و قواعد', icon: FileSignature }, true),
+        ...item('contracts.bulk', { to: b + '/contracts/bulk', label: 'صدور گروهی قرارداد', icon: FileSignature }, true),
         ...item('payslips.manage', { to: `${b}/payroll`, label: 'فیش حقوق نیروها', icon: FileSpreadsheet }, true),
         ...item('files.manage', { to: `${b}/files`, label: m.isCompany ? 'اسناد شرکت و پروژه' : 'اسناد سازمان', icon: FolderOpen }),
         ...item('reports.view', { to: `${b}/reports`, label: 'گزارش‌ها', icon: ChartColumn }),

@@ -20,6 +20,14 @@ export type SubRole =
   | 'sys_admin'
 
 export type Permission =
+  | 'family.manage'
+  | 'family.review'
+  | 'insurance.view'
+  | 'insurance.edit'
+  | 'insurance.verify'
+  | 'contracts.bulk'
+  | 'templates.manage'
+  | 'payslips.download'
   | 'dashboard.view'
   | 'workforce.view'
   | 'workforce.edit'
@@ -91,7 +99,18 @@ export interface BankAccount {
   activeForPayroll: boolean
 }
 
-export interface Child {
+export type ReviewStatus = 'pending' | 'approved' | 'rejected' | 'needs_correction'
+export interface RecordHistory { id: string; at: string; by: string; action: string; note?: string; before?: string; after?: string }
+export interface Child { 
+  firstName?: string
+  lastName?: string
+  nationalId?: string
+  registeredAt?: string
+  status?: ReviewStatus
+  reviewNote?: string
+  documents?: Attachment[]
+  version?: number
+  history?: RecordHistory[]
   id: string
   fullName: string
   birthDate: string
@@ -344,7 +363,66 @@ export interface ContractEvent {
   text: string
 }
 
-export interface Contract {
+export interface CompanyDocumentTemplate {
+  id: string
+  companyId: string
+  name: string
+  companyName: string
+  logo?: Attachment
+  registrationInfo: string
+  address: string
+  contact: string
+  header: string
+  footer: string
+  contractTitle: string
+  payslipTitle: string
+  signatoryName: string
+  signatoryTitle: string
+  signatureArea: boolean
+  stampArea: boolean
+  showNumber: boolean
+  extraText: string
+  version: number
+}
+export interface CompanyHRPolicy {
+  companyId: string
+  childAgeThreshold: number
+  childNationalIdRequired: boolean
+  insuranceMonthlyCap?: number
+}
+export interface InsuranceRecord {
+  id: string
+  employeeId: string
+  companyId: string
+  year: number
+  month: number
+  days: number
+  employer: string
+  registrationNumber: string
+  documents: Attachment[]
+  submittedAt: string
+  updatedAt: string
+  status: ReviewStatus
+  version: number
+  reviewNote?: string
+  history: RecordHistory[]
+}
+export interface ContractBatch {
+  id: string
+  companyId: string
+  createdBy: string
+  createdAt: string
+  fingerprint: string
+  results: { employeeId: string; contractId?: string; error?: string }[]
+}
+export interface Contract { 
+  employeeSnapshot?: Pick<Employee, 'firstName' | 'lastName' | 'nationalId' | 'personnelNo' | 'shift'>
+  documentFormat?: CompanyDocumentTemplate
+  contractType?: string
+  description?: string
+  createdAt?: string
+  createdBy?: string
+  batchId?: string
   id: string
   number: string
   kind: 'worker' | 'project'
@@ -386,6 +464,7 @@ export interface PayslipLine {
 }
 
 export interface Payslip {
+  documentFormat?: CompanyDocumentTemplate
   id: string
   employeeId: string
   year: number
@@ -513,7 +592,8 @@ export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
 
 export interface TaskLink {
-  type: 'contract' | 'request' | 'document' | 'import' | 'project' | 'employee'
+  employeeId?: string
+  type: 'contract' | 'request' | 'document' | 'import' | 'project' | 'employee' | 'family' | 'insurance'
   id: string
   label: string
 }

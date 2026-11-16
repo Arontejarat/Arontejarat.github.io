@@ -27,6 +27,17 @@ export function EmployeeLayout() {
       groups={[
         { items: desktopMain },
         {
+          title: 'پرونده من',
+          items: [
+            { to: '/me/documents/personnel', label: 'مدارک پرسنلی', icon: FileText },
+            { to: '/me/documents/contracts', label: 'قراردادهای کار', icon: FileText },
+            { to: '/me/documents/payslips', label: 'فیش حقوقی', icon: FileText },
+            { to: '/me/insurance', label: 'سوابق بیمه', icon: ShieldCheck },
+            { to: '/me/family', label: 'اطلاعات فرزندان', icon: UserRound },
+            { to: '/me/profile/personal', label: 'اطلاعات فردی', icon: UserRound },
+          ],
+        },
+        {
           title: 'سایر',
           items: [
             { to: '/me/documents/search', label: 'جست‌وجوی اسناد', icon: Search },

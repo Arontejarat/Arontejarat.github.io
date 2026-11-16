@@ -3,6 +3,7 @@ import { Link, Navigate, useParams, useSearchParams } from 'react-router'
 import { Bell, CalendarClock, CircleCheck, FilePlus2, FileSignature, History, PenLine, RotateCcw, SearchX, Send, Siren, UserPlus } from 'lucide-react'
 import {
   Button,
+  ButtonLink,
   Callout,
   Card,
   CardHeader,
@@ -65,9 +66,10 @@ export function MgmtContractsPage() {
         breadcrumbs={[{ label: 'داشبورد', to: m.base }, { label: 'قراردادها' }]}
         actions={
           m.can('contracts.manage') ? (
+            <div className="flex flex-wrap gap-2">{m.can('contracts.bulk') ? <ButtonLink to="/company/contracts/bulk" variant="outline">صدور گروهی قرارداد</ButtonLink> : null}
             <Button icon={FilePlus2} onClick={() => setCreate(true)}>
               ایجاد قرارداد ماهانه
-            </Button>
+            </Button></div>
           ) : null
         }
       />
@@ -219,8 +221,14 @@ function CreateContractDialog({ onClose }: { onClose: () => void }) {
   const emps = scopedEmployees(db, m.scope).filter((e) => e.employmentStatus !== 'terminated' && e.projectId)
   const [emp, setEmp] = useState('')
   const [period, setPeriod] = useState(periodKey(next.jy, next.jm))
+  const [preview, setPreview] = useState(false)
+  const [templateId, setTemplateId] = useState(db.documentTemplates.find((t) => t.companyId === m.entityId)?.id ?? '')
+  const template = db.documentTemplates.find((t) => t.id === templateId && t.companyId === m.entityId)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const worker = emps.find((e) => e.id === emp)
+  const [previewYear, previewMonth] = period.split('-').map(Number)
+  const sample: Contract | undefined = worker && template ? { id: 'preview', number: 'پیش‌نمایش', kind: 'worker', title: 'قرارداد ماهانه', companyId: worker.companyId, orgId: worker.orgId, projectId: worker.projectId ?? '', employeeId: worker.id, startDate: jalaliToISO(previewYear, previewMonth, 1), endDate: jalaliToISO(previewYear, previewMonth, jalaliMonthLength(previewYear, previewMonth)), periodYear: previewYear, periodMonth: previewMonth, stage: 'draft', parties: [], version: 1, versionHash: '', documentFormat: template, jobTitle: worker.jobTitle, workplace: worker.workplace, salary: [{ label: 'حقوق پایه', amount: 152_000_000 }, { label: 'حق مسکن', amount: 9_000_000 }, { label: 'بن کارگری', amount: 22_000_000 }], workHours: '۴۴ ساعت در هفته', history: [] } : undefined
   return (
     <Dialog
       open
@@ -237,10 +245,11 @@ function CreateContractDialog({ onClose }: { onClose: () => void }) {
             loading={busy}
             onClick={async () => {
               if (!emp) return setErr('نیرو را انتخاب کنید.')
+              if (!preview) { setPreview(true); return }
               const [y, mm] = period.split('-').map(Number)
               setBusy(true)
               try {
-                await actions.createWorkerContract(emp, y, mm, jalaliToISO(y, mm, 1), jalaliToISO(y, mm, jalaliMonthLength(y, mm)))
+                await actions.createWorkerContract(emp, y, mm, jalaliToISO(y, mm, 1), jalaliToISO(y, mm, jalaliMonthLength(y, mm)), templateId)
                 toast.success('پیش‌نویس قرارداد ایجاد شد')
                 onClose()
               } catch (x) {
@@ -250,18 +259,20 @@ function CreateContractDialog({ onClose }: { onClose: () => void }) {
               }
             }}
           >
-            ایجاد پیش‌نویس
+            {preview ? 'تأیید و ایجاد پیش‌نویس' : 'پیش‌نمایش قرارداد'}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
         <Field label="نیروی کار" required error={err}>
-          {(p) => <Select id={p.id} invalid={p.invalid} value={emp} onChange={(e) => { setEmp(e.target.value); setErr('') }} placeholder="انتخاب کنید" options={emps.map((e) => ({ value: e.id, label: `${fullName(e)} — ${e.personnelNo}` }))} />}
+          {(p) => <Select id={p.id} invalid={p.invalid} value={emp} onChange={(e) => { setEmp(e.target.value); setErr(''); setPreview(false) }} placeholder="انتخاب کنید" options={emps.map((e) => ({ value: e.id, label: `${fullName(e)} — ${e.personnelNo}` }))} />}
         </Field>
+        <Field label="قالب شرکت" required>{(p) => <Select id={p.id} value={templateId} onChange={(e) => { setTemplateId(e.target.value); setPreview(false) }} options={db.documentTemplates.filter((t) => t.companyId === m.entityId).map((t) => ({ value: t.id, label: t.name }))} />}</Field>
         <Field label="دوره قرارداد" required>
-          {(p) => <MonthPicker id={p.id} value={period} onChange={setPeriod} />}
+          {(p) => <MonthPicker id={p.id} value={period} onChange={(p) => { setPeriod(p); setPreview(false) }} />}
         </Field>
+        {preview && sample ? <ContractBody c={sample} db={db} employee={worker} /> : null}
       </div>
     </Dialog>
   )

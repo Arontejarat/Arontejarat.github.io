@@ -10,6 +10,7 @@ import { formatDate, formatNumber, formatPeriod, formatRial, toFaDigits } from '
 import { JALALI_MONTHS, periodKey } from '@/lib/jalali'
 import { cn } from '@/lib/cn'
 import type { Payslip } from '@/types/domain'
+import { PayslipActions } from '@/features/documents/PayslipActions'
 import { StoredFile } from '@/components/ui/StoredFile'
 import { DocumentsTabs } from './DocumentsHub'
 
@@ -49,6 +50,7 @@ function PayslipList({ empty }: { empty: boolean }) {
     { id: 'net', header: 'مبلغ خالص', cell: (p) => <span className="font-semibold tabular">{(p.source === 'file' ? 'در فایل فیش' : formatRial(netPay(p)))}</span>, sortValue: netPay },
     { id: 'issued', header: 'تاریخ صدور', cell: (p) => formatDate(p.correctedAt ?? p.issuedAt) },
     { id: 'pay', header: 'وضعیت پرداخت', cell: (p) => <StatusBadge meta={paymentMeta(p)} size="sm" /> },
+    { id: 'download', header: 'دریافت', cell: (p) => <PayslipActions payslip={p} employee={emp} /> },
     { id: 'go', header: <span className="sr-only">جزئیات</span>, cell: () => <ChevronLeft size={16} className="text-ink-300" aria-hidden />, className: 'w-8' },
   ]
   return (
@@ -88,7 +90,7 @@ function PayslipList({ empty }: { empty: boolean }) {
           pageSize={12}
           caption="فهرست فیش‌های حقوقی"
           mobileCard={(p) => (
-            <Link to={`/me/documents/payslips/${p.id}`} className="flex items-center justify-between gap-3">
+            <div className="space-y-3"><Link to={`/me/documents/payslips/${p.id}`} className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold">{formatPeriod(p.year, p.month)}</p>
                 <p className="mt-0.5 text-base font-extrabold tabular">{p.source === 'file' ? 'مشاهده فایل فیش' : formatRial(netPay(p))}</p>
@@ -98,7 +100,7 @@ function PayslipList({ empty }: { empty: boolean }) {
                 </div>
               </div>
               <ChevronLeft size={18} className="text-ink-300" aria-hidden />
-            </Link>
+            </Link><PayslipActions payslip={p} employee={emp} /></div>
           )}
           empty={<EmptyState compact icon={SearchX} title="فیشی برای این دوره پیدا نشد" />}
         />
@@ -141,6 +143,7 @@ export function PayslipDetailPage() {
           </>
         }
       />
+      <div className="mb-4 no-print"><PayslipActions payslip={shown} employee={emp} /></div>
       {p.previous?.length ? (
         <div className="no-print mb-4">
           <Tabs

@@ -30,23 +30,6 @@ npm run build      # production build → dist/
 npm run preview    # serve the build
 ```
 
-## GitHub Pages deployment
-
-In this repository on GitHub, open **Settings → Pages** and set **Source** to
-**GitHub Actions**. Push to `main`, or run **Deploy to GitHub Pages** from the
-**Actions** tab. The workflow installs dependencies, runs the regression checks,
-builds the app, and publishes `dist/` to https://arontejarat.github.io/.
-
-The Pages build uses hash routes (for example `/#/login`) so refreshing or sharing
-a nested page works on static hosting. Local development and the standard build
-keep browser routes. To preview the Pages build locally:
-
-```bash
-npm ci
-npm run build -- --mode github-pages
-npm run preview
-```
-
 ### Demo sign-in
 Open the **ورود سریع با حساب‌های نمایشی** panel on the login page and pick an account. There is one account per role and sub-role.
 You can also sign in with mobile + password: every account uses `Demo@1234`, and the SMS code is `12345`.
@@ -67,6 +50,10 @@ The dark **نسخه نمایشی** bar at the top of every panel opens the **ا�
 ## Customer workflow additions
 
 Statements (company → organization), monthly work reports (organization → company), insurance registration/code in personnel documents, explicit forwarding of signed worker contracts, and company-uploaded payroll files are implemented. See [customer changes](docs/CUSTOMER_CHANGES.md) for workflows and demo storage limitations. Run `npm test` for the workflow regression checks.
+
+## HR enhancements
+
+Employee essentials, downloadable payslips, versioned company document formats, child/HR review with age alerts, manual insurance-day records, and independent bulk worker contracts are implemented. Version-5 demo data migrates additively. See [HR enhancements and production boundaries](docs/HR_ENHANCEMENTS.md).
 
 ## Stack
 React 19, TypeScript 7, Vite 8, Tailwind CSS 4, React Router 8 (data router, route-level code splitting), lucide-react icons and the Vazirmatn variable font.

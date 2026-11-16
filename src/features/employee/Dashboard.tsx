@@ -1,3 +1,4 @@
+import { EssentialActions } from './EssentialActions'
 import { Link } from 'react-router'
 import {
   ArrowLeft,
@@ -136,6 +137,7 @@ function DashboardBody() {
         </div>
       </Card>
 
+      <EssentialActions />
       {/* Key counts */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="قرارداد نیازمند امضا" value={toSign.length} icon={FileSignature} tone="warning" to="/me/documents/contracts?status=ready" emphasis={toSign.length > 0} />
@@ -147,7 +149,7 @@ function DashboardBody() {
       <div className="grid gap-5 lg:grid-cols-3">
         {/* Action required */}
         <Card className="lg:col-span-2">
-          <CardHeader title="اقدامات لازم" description="مواردی که منتظر اقدام شما هستند، به ترتیب اهمیت." />
+          <CardHeader title="پیگیری درخواست‌ها و مهلت‌ها" description="مواردی که منتظر اقدام شما هستند، به ترتیب اهمیت." />
           {actions.length === 0 ? (
             <EmptyState compact icon={Inbox} title="کاری در انتظار شما نیست" description="همه درخواست‌ها، قراردادها و مدارک شما به‌روز هستند." />
           ) : (

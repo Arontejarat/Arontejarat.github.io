@@ -10,7 +10,7 @@ export const SUBROLES: Record<SubRole, { label: string; role: RoleKey; descripti
     label: 'نیروی کار',
     role: 'employee',
     description: 'دسترسی فقط به پرونده خود',
-    permissions: [],
+    permissions: ['family.manage', 'insurance.view', 'insurance.edit', 'payslips.download'],
   },
   org_admin: {
     label: 'مدیر کل سازمان',
@@ -79,6 +79,7 @@ export const SUBROLES: Record<SubRole, { label: string; role: RoleKey; descripti
       'workforce.status',
       'workforce.sensitive',
       'payslips.manage',
+      'family.manage', 'family.review', 'insurance.view', 'insurance.edit', 'insurance.verify', 'payslips.download',
       'documents.view',
       'documents.review',
       'documents.download',
@@ -87,7 +88,7 @@ export const SUBROLES: Record<SubRole, { label: string; role: RoleKey; descripti
       'requests.refer',
       'requests.execute',
       'contracts.view',
-      'contracts.manage',
+      'contracts.manage', 'contracts.bulk', 'templates.manage',
       'projects.view',
       'projects.manage',
       'tasks.view',
@@ -134,6 +135,7 @@ export const SUBROLES: Record<SubRole, { label: string; role: RoleKey; descripti
       'workforce.import',
       'workforce.sensitive',
       'payslips.manage',
+      'family.manage', 'family.review', 'insurance.view', 'insurance.edit', 'insurance.verify', 'payslips.download',
       'documents.view',
       'documents.review',
       'documents.download',
@@ -177,6 +179,14 @@ export const ROLE_LABEL: Record<RoleKey, string> = {
 }
 
 export const PERMISSION_LABEL: Record<Permission, string> = {
+  'family.manage': 'ثبت و ویرایش اطلاعات فرزندان',
+  'family.review': 'بررسی اطلاعات و مدارک خانواده',
+  'insurance.view': 'مشاهده سوابق بیمه',
+  'insurance.edit': 'ثبت و اصلاح سوابق بیمه',
+  'insurance.verify': 'بررسی و تأیید سوابق بیمه',
+  'contracts.bulk': 'صدور گروهی قرارداد',
+  'templates.manage': 'مدیریت قالب اسناد شرکت',
+  'payslips.download': 'دریافت فیش حقوق مجاز',
   'dashboard.view': 'مشاهده داشبورد',
   'workforce.view': 'مشاهده نیروها',
   'workforce.edit': 'ویرایش اطلاعات مجاز نیروها',
@@ -212,5 +222,5 @@ export const PERMISSION_GROUPS: { title: string; keys: Permission[] }[] = [
   { title: 'درخواست‌ها', keys: ['requests.view', 'requests.decide', 'requests.refer', 'requests.execute'] },
   { title: 'قراردادها', keys: ['payslips.manage', 'contracts.view', 'contracts.manage', 'contracts.approve'] },
   { title: 'پروژه و وظایف', keys: ['projects.view', 'projects.manage', 'tasks.view', 'tasks.manage'] },
-  { title: 'مدیریت', keys: ['dashboard.view', 'files.manage', 'reports.view', 'users.manage', 'settings.manage', 'activity.view'] },
+  { title: 'مدیریت', keys: ['family.manage', 'family.review', 'insurance.view', 'insurance.edit', 'insurance.verify', 'contracts.bulk', 'templates.manage', 'payslips.download', 'dashboard.view', 'files.manage', 'reports.view', 'users.manage', 'settings.manage', 'activity.view'] },
 ]

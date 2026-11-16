@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Receipt, Upload } from 'lucide-react'
 import { Badge, Button, Callout, DataTable, Dialog, EmptyState, Field, FileUploader, FilterBar, MonthPicker, PageHeader, PageState, SearchInput, Select, Textarea, useToast, type Column } from '@/components/ui'
+import { BrandedPayslip } from '@/features/documents/CompanyDocument'
 import { StoredFile } from '@/components/ui/StoredFile'
 import { useActions } from '@/auth/auth'
 import { useDB } from '@/mock/store'
@@ -48,6 +49,8 @@ function UploadPayslipDialog({ initial, onClose }: { initial: { employeeId?: str
   const employees = scopedEmployees(db, m.scope)
   const [employeeId, setEmployeeId] = useState(initial.employeeId ?? '')
   const [period, setPeriod] = useState(initial.period ?? periodKey(today.jy, today.jm))
+  const [templateId, setTemplateId] = useState(db.documentTemplates.find((t) => t.companyId === m.entityId)?.id ?? '')
+  const [preview, setPreview] = useState(false)
   const [files, setFiles] = useState<Attachment[]>([])
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
@@ -63,12 +66,18 @@ function UploadPayslipDialog({ initial, onClose }: { initial: { employeeId?: str
     setErrors(e)
     if (Object.keys(e).length) return
     setBusy(true)
-    try { await actions.uploadPayslip({ employeeId, period, file: files[0], correctionNote: note, expectedVersion: existing?.version ?? 0 }); toast.success('فیش حقوق منتشر شد', 'فایل در پنل نیروی کار قابل مشاهده است.'); onClose() }
+    try { await actions.uploadPayslip({ employeeId, period, file: files[0], templateId, correctionNote: note, expectedVersion: existing?.version ?? 0 }); toast.success('فیش حقوق منتشر شد', 'فایل در پنل نیروی کار قابل مشاهده است.'); onClose() }
     catch (e) { toast.fromError(e) } finally { setBusy(false) }
   }
-  return <Dialog open onClose={onClose} dismissable={!busy} title="بارگذاری فیش حقوق" size="lg" footer={<><Button variant="outline" onClick={onClose} disabled={busy}>انصراف</Button><Button loading={busy} icon={Upload} onClick={submit}>{existing ? 'تأیید جایگزینی و انتشار' : 'انتشار برای نیرو'}</Button></>}>
-    <fieldset disabled={busy} className="min-w-0 space-y-4">
+  return <Dialog open onClose={onClose} dismissable={!busy} title="بارگذاری فیش حقوق" size="lg" footer={<><Button variant="outline" onClick={onClose} disabled={busy}>انصراف</Button><Button loading={busy} icon={Upload} onClick={() => {
+      if (preview) { void submit(); return }
+      if (!employeeId || !period || !files[0] || (existing && !note.trim())) { toast.error('نیرو، دوره، فایل و دلیل جایگزینی را کامل کنید.'); return }
+      setPreview(true)
+    }}>{preview ? (existing ? 'تأیید جایگزینی و انتشار' : 'انتشار برای نیرو') : 'پیش‌نمایش قبل از انتشار'}</Button></>}>
+    {preview && employeeId && files[0] ? <div className="mb-5 space-y-4"><Callout tone="info">این برگه رسمی همراه فیش است؛ اصل فایل بدون تغییر منتشر می‌شود.</Callout><BrandedPayslip employee={employees.find((e) => e.id === employeeId)!} payslip={{ id: existing?.id ?? 'پیش‌نمایش', employeeId, year: Number(period.split('-')[0]), month: Number(period.split('-')[1]), status: 'final', version: 1, source: 'file', file: files[0], documentFormat: db.documentTemplates.find((t) => t.id === templateId), earnings: [], deductions: [], workDays: 0, overtimeHours: 0, issuedAt: new Date().toISOString(), payment: existing?.payment ?? null }} /><StoredFile file={files[0]} /><Button variant="outline" onClick={() => setPreview(false)}>بازگشت و ویرایش</Button></div> : null}
+    <fieldset disabled={busy || preview} className="min-w-0 space-y-4">
       <Field label="نیروی کار" required error={errors.employee}>{(p) => <Select id={p.id} invalid={p.invalid} value={employeeId} onChange={(e) => { setEmployeeId(e.target.value); setFiles([]); setNote('') }} placeholder="انتخاب نیرو" options={employees.map((e) => ({ value: e.id, label: fullName(e) + ' — ' + e.personnelNo }))} />}</Field>
+      <Field label="قالب رسمی شرکت" required>{(p) => <Select id={p.id} value={templateId} onChange={(e) => setTemplateId(e.target.value)} options={db.documentTemplates.filter((t) => t.companyId === m.entityId).map((t) => ({ value: t.id, label: t.name }))} />}</Field>
       <Field label="ماه حقوق" required error={errors.period}>{(p) => <MonthPicker id={p.id} value={period} onChange={(period) => { setPeriod(period); setNote('') }} />}</Field>
       {existing ? <Callout tone="warning">برای این دوره فیش موجود است. فایل جدید به‌عنوان نسخه {toFaDigits(existing.version + 1)} منتشر می‌شود و نسخه قبلی در سوابق نیرو باقی می‌ماند.</Callout> : null}
       <Field label="فایل فیش حقوق" required error={errors.file}>{(p) => <FileUploader persistFile id={p.id} invalid={p.invalid} describedBy={p.describedBy} value={files} onChange={setFiles} accept={PAYSLIP_MIMES} maxFiles={1} maxSizeMb={10} />}</Field>

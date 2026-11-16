@@ -40,6 +40,10 @@ import { MonthCalendar } from './MonthCalendar'
 
 export function linkPath(base: string, l: TaskLink) {
   switch (l.type) {
+    case 'family':
+      return base + '/family?employee=' + (l.employeeId ?? '')
+    case 'insurance':
+      return base + '/insurance?employee=' + (l.employeeId ?? '')
     case 'contract':
       return `${base}/contracts/${l.id}`
     case 'request':
