@@ -6,6 +6,19 @@ They share one design system, one data model and one mock data layer.
 
 The PRD analysis (role matrix, page inventory, workflow map and assumptions) is in [docs/ANALYSIS.md](docs/ANALYSIS.md).
 
+## GitHub Pages deployment
+
+Keep `.github/workflows/deploy-pages.yml` in the repository when uploading new
+versions, including the hidden `.github` directory. Removing it stops automatic
+deployments. Push changes to `main` to build, test, and deploy the website.
+
+In GitHub **Settings → Pages**, use **GitHub Actions** as the source. Monitor
+**Actions → Deploy to GitHub Pages** for the deployment result. The public URL is
+https://arontejarat.github.io/.
+
+The workflow uses `npm run build -- --mode github-pages` to enable hash routes
+(such as `/#/login`) that support page refreshes on GitHub Pages.
+
 ## Run
 
 Requires Node ≥ 22.
